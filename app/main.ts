@@ -10,25 +10,22 @@ const handleServerCommunication = (socket : net.Socket) => {
     const allLines = httpReqData.split('\r\n');    
     const requestStatusLine = allLines[0];
 
-    let headersObj: { [key: string]: string } = {};      
-    let prevRN = false;
-    for (let i = 1; i < allLines.length; i++) {
-      if(allLines[i] === '')
-      {
-        if(prevRN) break;
-        prevRN = true;
-        continue;
-      }
-      prevRN = false;
-      const hv = allLines[i].split(':', 2);
-      headersObj[hv[0]] = hv[1].slice(1);      
-  }
-  let requestBody : string = ""; 
-  if(allLines[-1] !== "")
-  {
-    requestBody = allLines[-1]; //!Check if I will need clone method or not.
-  }
+    console.log(allLines);
 
+    let headersObj: { [key: string]: string } = {};      
+    let requestBody = "";
+    for (let i = 1; i < allLines.length; i++) {
+      const hv = allLines[i].split(':', 2);
+      console.log(hv);
+      if(hv.length === 2)
+      {
+        headersObj[hv[0]] = hv[1].slice(1);      
+      }
+  }
+  if(allLines[allLines.length - 2] == "")
+  {
+    requestBody = allLines[allLines.length - 1];
+  }
   //!For debugging
   // console.log('new');
   // console.log(requestStatusLine);
@@ -92,6 +89,25 @@ const handleServerCommunication = (socket : net.Socket) => {
       }
     }
   }
+  else if(statusContent[0] === 'POST')
+  {
+    const subPaths = statusContent[1].split('/', 3);
+    console.log('printing subpaths 1:')
+    console.log(subPaths)
+    const filePath = process.argv[3] + subPaths[2]; //!Absolute paths;
+    //console.log(process.argv[2]);
+
+
+
+
+    console.log(`File path it is checking is: ${filePath}`);
+    const fileContent = fs.writeFile(filePath, requestBody, (err) => {});
+    responseStatusLine = `HTTP/1.1 201 Created\r\n\r\n`;
+    socket.write(responseStatusLine);       
+  }
+
+
+
   });
 
   socket.on("close", function () {
