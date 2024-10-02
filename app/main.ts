@@ -11,13 +11,13 @@ const handleServerCommunication = (socket : net.Socket) => {
     const allLines = httpReqData.split('\r\n');    
     const requestStatusLine = allLines[0];
 
-    console.log(allLines);
+    //console.log(allLines);
 
     let headersObj: { [key: string]: string } = {};      
     let requestBody = "";
     for (let i = 1; i < allLines.length; i++) {
       const hv = allLines[i].split(':', 2);
-      console.log(hv);
+      //console.log(hv);
       if(hv.length === 2)
       {
         headersObj[hv[0]] = hv[1].slice(1);      
@@ -49,20 +49,20 @@ const handleServerCommunication = (socket : net.Socket) => {
     else
     {
       const subPaths = statusContent[1].split('/', 3);
-      console.log('printing subpaths:')
-      console.log(subPaths)
+      //console.log('printing subpaths:')
+      //console.log(subPaths)
       if(subPaths[1] === 'echo')
       {
         if('Accept-Encoding' in headersObj)
         {
           const clientSupportedEncodings = headersObj['Accept-Encoding'].split(',').map(encoding => encoding.trim());
-          console.log(clientSupportedEncodings);
+          //console.log(clientSupportedEncodings);
           if(clientSupportedEncodings.includes('gzip'))
           {
             const zippedContent = gzipSync(subPaths[2]);         
-            responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${zippedContent}`;
-            console.log(responseStatusLine);
+            responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${zippedContent.length}\r\n\r\n`;
             socket.write(responseStatusLine);
+            socket.write(zippedContent);  //!Need to send out byte content directly and not to convert it into string.
           }
           else
           {
@@ -90,7 +90,7 @@ const handleServerCommunication = (socket : net.Socket) => {
         const filePath = process.argv[3] + subPaths[2]; //!Absolute paths;
         //console.log(process.argv[2]);
 
-        console.log(`File path it is checking is: ${filePath}`);
+        //console.log(`File path it is checking is: ${filePath}`);
         const fileContent = fs.readFile(filePath, (readErr, fileContent) => {
         if(readErr)
         {
@@ -114,15 +114,15 @@ const handleServerCommunication = (socket : net.Socket) => {
   else if(statusContent[0] === 'POST')
   {
     const subPaths = statusContent[1].split('/', 3);
-    console.log('printing subpaths 1:')
-    console.log(subPaths)
+    //console.log('printing subpaths 1:')
+    //console.log(subPaths)
     const filePath = process.argv[3] + subPaths[2]; //!Absolute paths;
     //console.log(process.argv[2]);
 
 
 
 
-    console.log(`File path it is checking is: ${filePath}`);
+    //console.log(`File path it is checking is: ${filePath}`);
     const fileContent = fs.writeFile(filePath, requestBody, (err) => {});
     responseStatusLine = `HTTP/1.1 201 Created\r\n\r\n`;
     socket.write(responseStatusLine);       
