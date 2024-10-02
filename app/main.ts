@@ -9,14 +9,24 @@ const handleServerCommunication = (socket : net.Socket) => {
     console.log(req_str);
     const arrays = req_str.split(' ');
     let responseStatusLine;
-    if(arrays[1].length === 1 && arrays[1] === '/')
+    if(arrays[1].length === 1 && arrays[1] === '/') //!Only root present.
     {
       responseStatusLine = "HTTP/1.1 200 OK\r\n\r\n";
-
     }
     else
     {
-      responseStatusLine = "HTTP/1.1 404 Not Found\r\n\r\n";
+      const subPaths = arrays[1].split('/');
+      //console.log(subPaths);
+      if(subPaths.length === 3 && subPaths[1] === 'echo')
+      {
+        //!Generate the response.
+        let retRes = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${subPaths[2]}`;
+        responseStatusLine = retRes;
+      }
+      else
+      {
+        responseStatusLine = "HTTP/1.1 404 Not Found\r\n\r\n";
+      }
     }
     socket.write(responseStatusLine);       
   });
