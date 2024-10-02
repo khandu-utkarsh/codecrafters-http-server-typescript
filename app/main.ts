@@ -53,11 +53,23 @@ const handleServerCommunication = (socket : net.Socket) => {
       console.log(subPaths)
       if(subPaths[1] === 'echo')
       {
-        if('Accept-Encoding' in headersObj && headersObj['Accept-Encoding'] === "gzip")
+        if('Accept-Encoding' in headersObj)
         {
-          const zippedContent = gzipSync(subPaths[2]);         
-          responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${zippedContent}`;
-          socket.write(responseStatusLine);
+          const clientSupportedEncodings = headersObj['Accept-Encoding'].split(',').map(encoding => encoding.trim());
+          console.log(clientSupportedEncodings);
+          if(clientSupportedEncodings.includes('gzip'))
+          {
+            const zippedContent = gzipSync(subPaths[2]);         
+            responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${zippedContent}`;
+            console.log(responseStatusLine);
+            socket.write(responseStatusLine);
+          }
+          else
+          {
+            responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${subPaths[2]}`;
+            socket.write(responseStatusLine);       
+
+          }      
         }
         else
         {
