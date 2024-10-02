@@ -46,6 +46,7 @@ const handleServerCommunication = (socket : net.Socket) => {
     if(reqAdd === '/') //!Asking for the root:
     {
       responseStatusLine = "HTTP/1.1 200 OK\r\n\r\n";
+      socket.write(responseStatusLine);
     }
     else
     {
@@ -56,26 +57,41 @@ const handleServerCommunication = (socket : net.Socket) => {
       {
         //!Generate the response.
         responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${subPaths[2]}`;
+        socket.write(responseStatusLine);       
       }
       else if(subPaths[1] === 'user-agent')
       {
         const userAgentRes = headersObj['User-Agent'];
         responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Type: text/plain\r\nContent-Length: ${userAgentRes.length}\r\n\r\n${userAgentRes}`;
+        socket.write(responseStatusLine);       
         //console.log(responseStatusLine);
       }
       else if(subPaths[1] === 'files')
       {
-        const filePath = '/' + subPaths[2]; //!Absolute paths;
-        const fileContent = fs.readFileSync(filePath);
-        responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`;
+        const filePath = process.argv[3] + subPaths[2]; //!Absolute paths;
+        //console.log(process.argv[2]);
+
+        console.log(`File path it is checking is: ${filePath}`);
+        const fileContent = fs.readFile(filePath, (readErr, fileContent) => {
+        if(readErr)
+        {
+          responseStatusLine = "HTTP/1.1 404 Not Found\r\n\r\n";
+          socket.write(responseStatusLine);       
+        }
+        else{
+          responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`;
+          socket.write(responseStatusLine);       
+        }
+
+        });
       }
       else
       {
         responseStatusLine = "HTTP/1.1 404 Not Found\r\n\r\n";
+        socket.write(responseStatusLine);       
       }
     }
   }
-  socket.write(responseStatusLine);       
   });
 
   socket.on("close", function () {
