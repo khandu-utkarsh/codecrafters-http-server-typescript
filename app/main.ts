@@ -1,5 +1,6 @@
 import * as net from "net";
 import * as fs from 'fs';
+import { gzipSync } from "zlib";
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 console.log("Logs from your program will appear here!");
@@ -52,9 +53,18 @@ const handleServerCommunication = (socket : net.Socket) => {
       console.log(subPaths)
       if(subPaths[1] === 'echo')
       {
-        //!Generate the response.
-        responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${subPaths[2]}`;
-        socket.write(responseStatusLine);       
+        if('Accept-Encoding' in headersObj && headersObj['Accept-Encoding'] === "gzip")
+        {
+          const zippedContent = gzipSync(subPaths[2]);         
+          responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${zippedContent}`;
+          socket.write(responseStatusLine);
+        }
+        else
+        {
+          //!Generate the response.
+          responseStatusLine = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Type: text/plain\r\nContent-Length: ${subPaths[2].length}\r\n\r\n${subPaths[2]}`;
+          socket.write(responseStatusLine);       
+        }
       }
       else if(subPaths[1] === 'user-agent')
       {
